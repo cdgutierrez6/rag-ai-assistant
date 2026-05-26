@@ -6,6 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/pgvector-316192?style=flat-square&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com)
+[![CI](https://github.com/cdgutierrez6/rag-ai-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/cdgutierrez6/rag-ai-assistant/actions/workflows/ci.yml)
 
 ---
 
