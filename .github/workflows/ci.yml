@@ -49,7 +49,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests with coverage
-        run: pytest  # coverage flags come from pytest.ini addopts
+        run: pytest
+        env:
+          ANTHROPIC_API_KEY: test_key_ci_placeholder  # coverage flags come from pytest.ini addopts
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -79,6 +81,8 @@ jobs:
 
       - name: Generate coverage.xml
         run: pytest --cov=app --cov-report=xml:coverage.xml -q
+        env:
+          ANTHROPIC_API_KEY: test_key_ci_placeholder
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
