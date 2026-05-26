@@ -5,7 +5,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str
     claude_model: str = "claude-opus-4-7"
 
-    database_url: str = "postgresql://rag_user:rag_pass@localhost:5432/rag_db"
+    # Required: set DATABASE_URL environment variable (see .env.example)
+    # Format: postgresql://user:password@host:port/database
+    database_url: str
 
     chunk_size: int = 500
     chunk_overlap: int = 50
