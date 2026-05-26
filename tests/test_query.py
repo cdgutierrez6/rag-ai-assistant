@@ -133,7 +133,7 @@ class TestQueryEndpointErrors:
         resp = client.post("/query", json={"question": "This will fail internally"})
 
         assert resp.status_code == 500
-        assert "pgvector connection lost" in resp.json()["detail"]
+        assert resp.json()["detail"] == "Internal server error"
 
     @patch("app.api.routes.query.rag_pipeline.query")
     def test_query_returns_500_when_llm_raises(self, mock_pipeline, client):
