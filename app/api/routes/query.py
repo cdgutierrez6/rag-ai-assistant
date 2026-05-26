@@ -15,8 +15,8 @@ async def query_documents(request: QueryRequest):
             session_id=request.session_id,
             top_k=request.top_k,
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/history/{session_id}", response_model=HistoryResponse)

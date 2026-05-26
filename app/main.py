@@ -1,9 +1,15 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.api.routes import ingest, query
 from app.db.vector_store import engine
+
+
+def _get_allowed_origins() -> list[str]:
+    raw = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+    return [o.strip() for o in raw.split(",") if o.strip()]
 
 
 @asynccontextmanager
@@ -13,7 +19,6 @@ async def lifespan(app: FastAPI):
 
 
 def _init_db():
-    import os
     sql_path = os.path.join(os.path.dirname(__file__), "db", "init.sql")
     with open(sql_path) as f:
         sql = f.read()
@@ -31,9 +36,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_get_allowed_origins(),
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 app.include_router(ingest.router, tags=["Ingestion"])
