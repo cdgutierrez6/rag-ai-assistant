@@ -18,51 +18,44 @@ Production-ready RAG (Retrieval Augmented Generation) system that enables natura
 
 ### What is RAG and why does it matter?
 
-```
- WITHOUT RAG                               WITH RAG
- ──────────────────────────────────────    ──────────────────────────────────────────
- User: "What is the refund policy?"        User: "What is the refund policy?"
-                                                        │
- LLM: "I don't have that information"     ┌─────────────▼───────────────────────────┐
-      (answers from base knowledge,        │  1. Search vector DB for your docs     │
-       may hallucinate)                    │  2. Retrieve relevant chunks           │
-                                           │  3. Claude responds WITH context       │
-                                           └─────────────┬───────────────────────────┘
-                                                         │
-                                            Claude: "According to document X,
-                                                      the refund policy is..."
+```mermaid
+flowchart TB
+    subgraph WITHOUT["❌ Without RAG"]
+        direction LR
+        U1["User Question"] --> LLM1["LLM\nbase knowledge only"]
+        LLM1 --> R1["May hallucinate\nor give generic answer"]
+    end
+
+    subgraph WITH["✅ With RAG"]
+        direction LR
+        U2["User Question"] --> DB["Vector DB\nsemantic search"]
+        DB --> CTX["Relevant document\nchunks retrieved"]
+        CTX --> LLM2["Claude API\nwith context"]
+        LLM2 --> R2["Accurate answer\nciting your documents"]
+    end
 ```
 
 ---
 
 ### Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         RAG PIPELINE                            │
-│                                                                 │
-│  INDEXING (offline)          QUERYING (online)                  │
-│  ──────────────────          ──────────────────                 │
-│                                                                 │
-│  Documents                   User Question                      │
-│      │                            │                            │
-│      ▼                            ▼                            │
-│  Text Splitter              Embedding Model                     │
-│  (chunks 500 tokens)        (sentence-transformers)             │
-│      │                            │                            │
-│      ▼                            ▼                            │
-│  Embedding Model            pgvector Search                     │
-│  (vectorization)            (top-k similar chunks)             │
-│      │                            │                            │
-│      ▼                            ▼                            │
-│  pgvector Store  ──────────► Context Assembly                   │
-│  (PostgreSQL)                     │                            │
-│                                   ▼                            │
-│                            Claude API (claude-opus-4-7)        │
-│                                   │                            │
-│                                   ▼                            │
-│                            Answer + Sources                     │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph IDX["📥 Indexing — offline"]
+        D["Documents\nPDF · DOCX · TXT"] --> TS["Text Splitter\n500 tokens · overlap 50"]
+        TS --> EM1["Embedding Model\nall-MiniLM-L6-v2"]
+        EM1 --> PG[("pgvector\nPostgreSQL")]
+    end
+
+    subgraph QRY["🔍 Querying — real-time"]
+        Q["User Question"] --> EM2["Embedding Model\nall-MiniLM-L6-v2"]
+        EM2 --> VS["Vector Search\ncosine distance · top-k"]
+        VS --> CA["Context Assembly"]
+        CA --> LLM["Claude API\nclaude-opus-4-7"]
+        LLM --> ANS["Answer + Sources"]
+    end
+
+    PG -- "similar chunks" --> VS
 ```
 
 ---
@@ -112,17 +105,13 @@ curl -X POST http://localhost:8000/query \
 rag-ai-assistant/
 ├── app/
 │   ├── main.py                  # FastAPI app + lifespan
-│   ├── api/
-│   │   ├── routes/
-│   │   │   ├── ingest.py        # POST /ingest
-│   │   │   └── query.py         # POST /query, GET /history
-│   │   └── dependencies.py
+│   ├── api/routes/
+│   │   ├── ingest.py            # POST /ingest
+│   │   └── query.py             # POST /query, GET /history
 │   ├── core/
 │   │   ├── config.py            # Settings (pydantic-settings)
 │   │   ├── rag_pipeline.py      # Main RAG pipeline
-│   │   ├── document_loader.py   # PDF, DOCX, TXT loaders
-│   │   ├── text_splitter.py     # Chunking with overlap
-│   │   └── embeddings.py        # Embeddings wrapper
+│   │   └── document_loader.py   # PDF, DOCX, TXT loaders
 │   ├── db/
 │   │   ├── vector_store.py      # pgvector operations
 │   │   ├── session_store.py     # Conversation history
@@ -148,8 +137,7 @@ rag-ai-assistant/
 Ingests a document and indexes it in pgvector.
 
 ```json
-// Request: multipart/form-data
-// file: PDF/DOCX/TXT file
+// Request: multipart/form-data — file: PDF/DOCX/TXT
 
 // Response
 {
@@ -174,11 +162,7 @@ Queries the RAG system.
 {
   "answer": "According to document 'HR-Policy-2024.pdf'...",
   "sources": [
-    {
-      "document": "HR-Policy-2024.pdf",
-      "chunk": "Employees are entitled to...",
-      "similarity": 0.94
-    }
+    { "document": "HR-Policy-2024.pdf", "chunk": "...", "similarity": 0.94 }
   ],
   "session_id": "uuid"
 }
@@ -186,6 +170,34 @@ Queries the RAG system.
 
 #### `GET /history/{session_id}`
 Returns the conversation history for a session.
+
+---
+
+### Running Tests
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run all tests
+pytest
+
+# Verbose output
+pytest -v
+
+# With coverage report
+pytest --cov=app --cov-report=term-missing
+
+# Run a specific module
+pytest tests/test_pipeline.py -v
+pytest tests/test_ingest.py -v
+```
+
+| Test module | Coverage | Strategy |
+|---|---|---|
+| `test_pipeline.py` | RAG pipeline end-to-end | Claude API + pgvector mocked with `pytest-mock` |
+| `test_ingest.py` | Document ingestion & chunking | LangChain loaders mocked, chunking asserted |
+| `test_query.py` | Query endpoint + session history | Vector store mocked, response schema validated |
 
 ---
 
@@ -201,7 +213,7 @@ CHUNK_SIZE=500
 CHUNK_OVERLAP=50
 TOP_K_RESULTS=5
 
-# Production settings
+# Production
 MAX_DOCUMENTS_PER_USER=100
 MAX_FILE_SIZE_MB=50
 ```
@@ -228,7 +240,7 @@ MAX_FILE_SIZE_MB=50
 - **SQLAlchemy** (ORM)
 - **Docker** + **Docker Compose**
 - **Pydantic v2** (data validation)
-- **pytest** (testing)
+- **pytest** + **pytest-mock** (testing)
 
 ---
 
@@ -251,52 +263,44 @@ Sistema RAG (Retrieval Augmented Generation) de producción que permite hacer pr
 
 ### ¿Qué es RAG y por qué importa?
 
-```
- SIN RAG                                   CON RAG
- ──────────────────────────────────────    ──────────────────────────────────────────
- Usuario: "¿Cuál es la política de         Usuario: "¿Cuál es la política de
-           reembolso?"                                reembolso?"
-                                                           │
- LLM: "No tengo esa información"          ┌────────────────▼────────────────────────┐
-      (responde con su conocimiento base,  │  1. Busca en vector DB tus docs        │
-       puede alucinar)                     │  2. Recupera chunks relevantes         │
-                                           │  3. Claude responde CON contexto       │
-                                           └────────────────┬────────────────────────┘
-                                                            │
-                                            Claude: "Según el documento X,
-                                                      la política de reembolso es..."
+```mermaid
+flowchart TB
+    subgraph WITHOUT["❌ Sin RAG"]
+        direction LR
+        U1["Pregunta del usuario"] --> LLM1["LLM\nsolo conocimiento base"]
+        LLM1 --> R1["Puede alucinar\no dar respuesta genérica"]
+    end
+
+    subgraph WITH["✅ Con RAG"]
+        direction LR
+        U2["Pregunta del usuario"] --> DB["Vector DB\nbúsqueda semántica"]
+        DB --> CTX["Chunks relevantes\nde tus documentos"]
+        CTX --> LLM2["Claude API\ncon contexto"]
+        LLM2 --> R2["Respuesta precisa\ncitando tus documentos"]
+    end
 ```
 
 ---
 
 ### Arquitectura
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         RAG PIPELINE                            │
-│                                                                 │
-│  INDEXING (offline)          QUERYING (online)                  │
-│  ──────────────────          ──────────────────                 │
-│                                                                 │
-│  Documents                   User Question                      │
-│      │                            │                            │
-│      ▼                            ▼                            │
-│  Text Splitter              Embedding Model                     │
-│  (chunks 500 tokens)        (sentence-transformers)             │
-│      │                            │                            │
-│      ▼                            ▼                            │
-│  Embedding Model            pgvector Search                     │
-│  (vectorización)            (top-k chunks similares)           │
-│      │                            │                            │
-│      ▼                            ▼                            │
-│  pgvector Store  ──────────► Context Assembly                   │
-│  (PostgreSQL)                     │                            │
-│                                   ▼                            │
-│                            Claude API (claude-opus-4-7)        │
-│                                   │                            │
-│                                   ▼                            │
-│                            Respuesta + Fuentes                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph IDX["📥 Indexado — offline"]
+        D["Documentos\nPDF · DOCX · TXT"] --> TS["Text Splitter\n500 tokens · overlap 50"]
+        TS --> EM1["Embedding Model\nall-MiniLM-L6-v2"]
+        EM1 --> PG[("pgvector\nPostgreSQL")]
+    end
+
+    subgraph QRY["🔍 Consulta — tiempo real"]
+        Q["Pregunta del usuario"] --> EM2["Embedding Model\nall-MiniLM-L6-v2"]
+        EM2 --> VS["Vector Search\ndistancia coseno · top-k"]
+        VS --> CA["Ensamblado de contexto"]
+        CA --> LLM["Claude API\nclaude-opus-4-7"]
+        LLM --> ANS["Respuesta + Fuentes"]
+    end
+
+    PG -- "chunks similares" --> VS
 ```
 
 ---
@@ -346,17 +350,13 @@ curl -X POST http://localhost:8000/query \
 rag-ai-assistant/
 ├── app/
 │   ├── main.py                  # FastAPI app + lifespan
-│   ├── api/
-│   │   ├── routes/
-│   │   │   ├── ingest.py        # POST /ingest
-│   │   │   └── query.py         # POST /query, GET /history
-│   │   └── dependencies.py
+│   ├── api/routes/
+│   │   ├── ingest.py            # POST /ingest
+│   │   └── query.py             # POST /query, GET /history
 │   ├── core/
 │   │   ├── config.py            # Settings (pydantic-settings)
 │   │   ├── rag_pipeline.py      # Pipeline principal RAG
-│   │   ├── document_loader.py   # Carga PDF, DOCX, TXT
-│   │   ├── text_splitter.py     # Chunking con solapamiento
-│   │   └── embeddings.py        # Wrapper embeddings
+│   │   └── document_loader.py   # Carga PDF, DOCX, TXT
 │   ├── db/
 │   │   ├── vector_store.py      # Operaciones pgvector
 │   │   ├── session_store.py     # Historial de conversación
@@ -382,8 +382,7 @@ rag-ai-assistant/
 Ingesta un documento y lo indexa en pgvector.
 
 ```json
-// Request: multipart/form-data
-// file: archivo PDF/DOCX/TXT
+// Request: multipart/form-data — file: archivo PDF/DOCX/TXT
 
 // Response
 {
@@ -408,11 +407,7 @@ Consulta el sistema RAG.
 {
   "answer": "Según el documento 'HR-Policy-2024.pdf'...",
   "sources": [
-    {
-      "document": "HR-Policy-2024.pdf",
-      "chunk": "Los empleados tienen derecho a...",
-      "similarity": 0.94
-    }
+    { "document": "HR-Policy-2024.pdf", "chunk": "...", "similarity": 0.94 }
   ],
   "session_id": "uuid"
 }
@@ -420,6 +415,34 @@ Consulta el sistema RAG.
 
 #### `GET /history/{session_id}`
 Historial de conversación de una sesión.
+
+---
+
+### Correr Tests
+
+```bash
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Correr todos los tests
+pytest
+
+# Con output detallado
+pytest -v
+
+# Con reporte de cobertura
+pytest --cov=app --cov-report=term-missing
+
+# Módulo específico
+pytest tests/test_pipeline.py -v
+pytest tests/test_ingest.py -v
+```
+
+| Módulo de test | Cobertura | Estrategia |
+|---|---|---|
+| `test_pipeline.py` | Pipeline RAG end-to-end | Claude API + pgvector mockeados con `pytest-mock` |
+| `test_ingest.py` | Ingesta de documentos y chunking | LangChain loaders mockeados, chunking verificado |
+| `test_query.py` | Endpoint de consulta + historial | Vector store mockeado, schema de respuesta validado |
 
 ---
 
@@ -435,7 +458,7 @@ CHUNK_SIZE=500
 CHUNK_OVERLAP=50
 TOP_K_RESULTS=5
 
-# Para producción
+# Producción
 MAX_DOCUMENTS_PER_USER=100
 MAX_FILE_SIZE_MB=50
 ```
@@ -462,7 +485,7 @@ MAX_FILE_SIZE_MB=50
 - **SQLAlchemy** (ORM)
 - **Docker** + **Docker Compose**
 - **Pydantic v2** (validación de datos)
-- **pytest** (testing)
+- **pytest** + **pytest-mock** (testing)
 
 ---
 
