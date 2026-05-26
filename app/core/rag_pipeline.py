@@ -12,7 +12,6 @@ def embed_text(text: str) -> List[float]:
     # Claude doesn't expose a standalone embeddings endpoint yet;
     # use a local sentence-transformers model as the embedding layer.
     # This keeps the LLM (Claude) separate from the retrieval layer.
-    from sentence_transformers import SentenceTransformer
     _model = _get_embedding_model()
     return _model.encode(text).tolist()
 
@@ -71,9 +70,9 @@ def query(question: str, session_id: str, top_k: int) -> QueryResponse:
 
 def _system_prompt() -> str:
     return (
-        "Eres un asistente experto que responde preguntas basándose ÚNICAMENTE "
+        "Eres un asistente experto que responde preguntas basandose UNICAMENTE "
         "en el contexto de documentos proporcionados. "
-        "Si la respuesta no está en el contexto, dilo explícitamente. "
+        "Si la respuesta no esta en el contexto, dilo explicitamente. "
         "Cita siempre el documento fuente al final de tu respuesta. "
         "Responde en el mismo idioma de la pregunta."
     )
