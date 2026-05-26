@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 from app.core.document_loader import split_documents
 from langchain.schema import Document
