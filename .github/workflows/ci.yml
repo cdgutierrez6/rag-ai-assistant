@@ -49,14 +49,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests with coverage
-        run: |
-          pytest \
-            --cov=app \
-            --cov-report=xml:coverage.xml \
-            --cov-report=term-missing \
-            --cov-fail-under=80 \
-            -v
-        # pytest.ini already sets these flags — explicit here for visibility
+        run: pytest  # coverage flags come from pytest.ini addopts
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
