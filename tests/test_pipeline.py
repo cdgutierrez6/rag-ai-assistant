@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 from app.core.document_loader import split_documents
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 
 def test_split_documents_basic():
