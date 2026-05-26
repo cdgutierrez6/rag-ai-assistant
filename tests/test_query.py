@@ -217,7 +217,7 @@ class TestGetHistory:
 
 class TestDeleteHistory:
 
-    @patch("app.api.routes.query.SessionLocal")
+    @patch("app.db.vector_store.SessionLocal")
     def test_delete_history_returns_cleared_status(self, mock_session_local, client):
         mock_db = MagicMock()
         mock_session_local.return_value.__enter__ = MagicMock(return_value=mock_db)
@@ -230,7 +230,7 @@ class TestDeleteHistory:
         assert body["status"] == "cleared"
         assert body["session_id"] == "session-to-delete"
 
-    @patch("app.api.routes.query.SessionLocal")
+    @patch("app.db.vector_store.SessionLocal")
     def test_delete_history_executes_delete_query(self, mock_session_local, client):
         mock_db = MagicMock()
         mock_session_local.return_value.__enter__ = MagicMock(return_value=mock_db)
