@@ -31,7 +31,7 @@ def test_ingest_unsupported_extension(client):
 @patch("app.api.routes.ingest.embed_chunks")
 @patch("app.api.routes.ingest.vector_store.store_chunks")
 def test_ingest_txt_success(mock_store, mock_embed, mock_split, mock_load, client):
-    from langchain.schema import Document
+    from langchain_core.documents import Document
     mock_load.return_value = [Document(page_content="sample text", metadata={})]
     mock_split.return_value = ["chunk one", "chunk two"]
     mock_embed.return_value = [("chunk one", [0.1] * 384), ("chunk two", [0.2] * 384)]
