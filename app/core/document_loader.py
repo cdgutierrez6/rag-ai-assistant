@@ -1,4 +1,5 @@
-import io
+import os
+import tempfile
 from typing import List
 from langchain.schema import Document
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
@@ -20,7 +21,6 @@ def load_from_bytes(content: bytes, filename: str) -> List[Document]:
 
 
 def _load_pdf(content: bytes, filename: str) -> List[Document]:
-    import tempfile, os
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
         tmp.write(content)
         tmp_path = tmp.name
@@ -32,7 +32,6 @@ def _load_pdf(content: bytes, filename: str) -> List[Document]:
 
 
 def _load_docx(content: bytes, filename: str) -> List[Document]:
-    import tempfile, os
     with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
         tmp.write(content)
         tmp_path = tmp.name
