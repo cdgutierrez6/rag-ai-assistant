@@ -1,17 +1,20 @@
 import uuid
-from fastapi import APIRouter, UploadFile, File, HTTPException
+import re
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from app.core.config import settings
 from app.core.document_loader import load_from_bytes, split_documents
 from app.core.rag_pipeline import embed_chunks
+from app.core.security import verify_api_key
 from app.db import vector_store
 from app.models.response import IngestResponse
 
 router = APIRouter()
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "doc", "txt", "md"}
+SAFE_FILENAME_RE = re.compile(r'^[\w\-. ]+$')
 
 
-@router.post("/ingest", response_model=IngestResponse)
+@router.post("/ingest", response_model=IngestResponse, dependencies=[Depends(verify_api_key)])
 async def ingest_document(file: UploadFile = File(...)):
     _validate_file(file)
 
@@ -40,6 +43,8 @@ async def ingest_document(file: UploadFile = File(...)):
 def _validate_file(file: UploadFile) -> None:
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
+    if not SAFE_FILENAME_RE.match(file.filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     ext = file.filename.rsplit(".", 1)[-1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
