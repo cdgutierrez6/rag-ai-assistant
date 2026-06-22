@@ -1,0 +1,8 @@
+# OpenSpec project config
+# 'context' is injected into all artifact instructions (propose/specs/design/tasks).
+schema: spec-driven
+context: |
+  RAG AI Assistant: Retrieval Augmented Generation con Claude API. Python.
+  Stack: FastAPI + uvicorn, anthropic (Claude), langchain + langchain-community + text-splitters + langchain-anthropic, pgvector (PostgreSQL como vector store).
+  Estructura: app/, tests/, docker-compose.yml, Dockerfile.
+  Constraint: chunking y embeddings consistentes; respuestas ancladas al contexto recuperado.
