@@ -13,7 +13,13 @@
 <details open>
 <summary><h2>🇺🇸 English</h2></summary>
 
-Production-ready RAG (Retrieval Augmented Generation) system that enables natural language questions over your own documents, using **Claude API** as the LLM and **pgvector** as the vector store. Designed with clean architecture, ready to scale.
+A **reference / portfolio implementation** of a RAG (Retrieval Augmented Generation) system that answers natural-language questions over your own documents, using **Claude API** as the LLM and **pgvector** as the vector store. Built with a clean, layered architecture to demonstrate the end-to-end RAG pattern (ingest → embed → retrieve → generate).
+
+---
+
+### Status & Scope
+
+This is a **reference implementation / portfolio build**, not a production service. It demonstrates the full RAG pipeline end-to-end and runs locally via Docker Compose (single-node FastAPI + PostgreSQL/pgvector). It has **not** been hardened, load-tested, or deployed at scale, and it ships no authentication, multi-tenancy, or horizontal-scaling story. Treat it as a working, well-structured example to learn from or extend — not as a drop-in production system.
 
 ---
 
@@ -214,20 +220,22 @@ CHUNK_SIZE=500
 CHUNK_OVERLAP=50
 TOP_K_RESULTS=5
 
-# Production
+# Optional limits
 MAX_DOCUMENTS_PER_USER=100
 MAX_FILE_SIZE_MB=50
 ```
 
 ---
 
-### Use Cases
+### Example Use Cases
+
+Illustrative scenarios this pattern fits — not deployments of this repository.
 
 - **Internal support** — Chatbot that answers questions about company policies and procedures
 - **Legal** — Query contracts and regulations
 - **Education** — Assistant over academic material
 - **Onboarding** — Knowledge base for new employees
-- **Telemetry** — Log analysis and technical reports (real case applied at SATRACK)
+- **Telemetry** — Log analysis and technical reports
 
 ---
 
@@ -258,7 +266,13 @@ MAX_FILE_SIZE_MB=50
 <details>
 <summary><h2>🇨🇴 Español</h2></summary>
 
-Sistema RAG (Retrieval Augmented Generation) de producción que permite hacer preguntas en lenguaje natural sobre documentos propios, usando **Claude API** como LLM y **pgvector** como vector store. Diseñado con arquitectura limpia, lista para escalar.
+**Implementación de referencia / build de portafolio** de un sistema RAG (Retrieval Augmented Generation) que responde preguntas en lenguaje natural sobre documentos propios, usando **Claude API** como LLM y **pgvector** como vector store. Construido con una arquitectura limpia por capas para demostrar el patrón RAG de extremo a extremo (ingesta → embedding → recuperación → generación).
+
+---
+
+### Estado y Alcance
+
+Es una **implementación de referencia / build de portafolio**, no un servicio en producción. Demuestra el pipeline RAG completo de extremo a extremo y corre localmente vía Docker Compose (FastAPI + PostgreSQL/pgvector en un solo nodo). **No** ha sido endurecido, sometido a pruebas de carga ni desplegado a escala, y no incluye autenticación, multi-tenancy ni estrategia de escalado horizontal. Tómalo como un ejemplo funcional y bien estructurado para aprender o extender — no como un sistema de producción listo para usar.
 
 ---
 
@@ -459,20 +473,22 @@ CHUNK_SIZE=500
 CHUNK_OVERLAP=50
 TOP_K_RESULTS=5
 
-# Producción
+# Límites opcionales
 MAX_DOCUMENTS_PER_USER=100
 MAX_FILE_SIZE_MB=50
 ```
 
 ---
 
-### Casos de Uso
+### Casos de Uso de Ejemplo
+
+Escenarios ilustrativos que este patrón encaja — no despliegues de este repositorio.
 
 - **Soporte interno** — Chatbot que responde preguntas sobre políticas y procedimientos de la empresa
 - **Legal** — Consultas sobre contratos y normativas
 - **Educación** — Asistente sobre material académico
 - **Onboarding** — Base de conocimiento para nuevos empleados
-- **Telemetría** — Análisis de logs y reportes técnicos (caso real aplicado en SATRACK)
+- **Telemetría** — Análisis de logs y reportes técnicos
 
 ---
 
